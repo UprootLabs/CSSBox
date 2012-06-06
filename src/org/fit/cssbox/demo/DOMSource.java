@@ -23,9 +23,10 @@ package org.fit.cssbox.demo;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.xerces.parsers.DOMParser;
-import org.cyberneko.html.HTMLConfiguration;
+import nu.validator.htmlparser.dom.HtmlDocumentBuilder;
+
 import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 /**
@@ -71,12 +72,10 @@ public class DOMSource
 
     public Document parse() throws SAXException, IOException
     {
-        DOMParser parser = new DOMParser(new HTMLConfiguration());
-        parser.setProperty("http://cyberneko.org/html/properties/names/elems", "lower");
-        if (charset != null)
-            parser.setProperty("http://cyberneko.org/html/properties/default-encoding", charset);
-        parser.parse(new org.xml.sax.InputSource(is));
-        doc = parser.getDocument();
+        HtmlDocumentBuilder parser = new HtmlDocumentBuilder();
+        InputSource isrc = new InputSource(is);
+        isrc.setEncoding(charset);
+        doc = parser.parse(isrc);
         return doc;
     }
 
