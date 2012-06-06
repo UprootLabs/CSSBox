@@ -654,7 +654,8 @@ public class BoxFactory
         ElementBox root;
         
         //New box style
-        NodeData style = decoder.getElementStyleInherited(n);
+        NodeData pstyle = (parent == null) ? null : parent.getStyle();
+        NodeData style = decoder.getElementStyleInherited(n, pstyle);
         if (style == null)
                 style = createAnonymousStyle(display);
         
@@ -692,7 +693,8 @@ public class BoxFactory
     {
         Element n = box.getElement();
         //New box style
-        NodeData style = decoder.getElementStyleInherited(n, pseudo);
+        NodeData pstyle = (box.getParent() == null) ? null : box.getParent().getStyle();
+        NodeData style = decoder.getElementStyleInherited(n, pseudo, pstyle);
         if (style != null)
         {
             TermList cont = style.getValue(TermList.class, "content");

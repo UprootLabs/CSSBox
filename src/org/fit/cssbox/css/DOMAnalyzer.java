@@ -31,8 +31,7 @@ import cz.vutbr.web.css.CSSFactory;
 import cz.vutbr.web.css.NodeData;
 import cz.vutbr.web.css.StyleSheet;
 import cz.vutbr.web.css.Selector.PseudoDeclaration;
-import cz.vutbr.web.domassign.Analyzer;
-import cz.vutbr.web.domassign.StyleMap;
+import cz.vutbr.web.domassign.DirectAnalyzer;
 
 
 /**
@@ -49,9 +48,7 @@ public class DOMAnalyzer
     private String media;   //media type
     
     private Vector<StyleSheet> styles;  //vector of StyleSheet sheets
-    private Analyzer analyzer; //style sheet analyzer
-    private StyleMap stylemap; //style map for DOM nodes
-    private StyleMap istylemap; //style map with inheritance
+    private DirectAnalyzer analyzer; //style sheet analyzer
     
     /** The origin of a style sheet */
     public enum Origin 
@@ -74,8 +71,6 @@ public class DOMAnalyzer
         this.media = DEFAULT_MEDIA;
         baseUrl = null;
         styles = new Vector<StyleSheet>();
-        stylemap = null;
-        istylemap = null;
     }
         
     /**
@@ -89,8 +84,6 @@ public class DOMAnalyzer
         this.media = DEFAULT_MEDIA;
         styles = new Vector<StyleSheet>();
         this.baseUrl = baseUrl;
-        stylemap = null;
-        istylemap = null;
     }
     
     /**
@@ -274,24 +267,9 @@ public class DOMAnalyzer
     public NodeData getElementStyle(Element el)
     {
     	if (analyzer == null)
-    		analyzer = new Analyzer(styles);
+    		analyzer = new DirectAnalyzer(styles);
     	
-    	if (stylemap == null)
-    		stylemap = analyzer.evaluateDOM(doc, media, false);
-    	
-    	return stylemap.get(el);
-    }
-    
-    /**
-     * Checks whether the inhetited style has been computed and computes it when necessary.
-     */
-    private void checkStylesInherited()
-    {
-    	if (analyzer == null)
-    		analyzer = new Analyzer(styles);
-        
-        if (istylemap == null)
-            istylemap = analyzer.evaluateDOM(doc, media, true);
+    	return analyzer.getElementStyle(el, null, media);
     }
     
     /**
@@ -300,10 +278,12 @@ public class DOMAnalyzer
      * @param el the element for which the style should be computed
      * @return the resulting style declaration 
      */
-    public NodeData getElementStyleInherited(Element el)
+    public NodeData getElementStyleInherited(Element el, NodeData parentStyle)
     {
-        checkStylesInherited();
-    	return istylemap.get(el);
+        NodeData ret = getElementStyle(el);
+        if (parentStyle != null)
+            ret.inheritFrom(parentStyle);
+        return ret;
     }
     
     /**
@@ -313,10 +293,14 @@ public class DOMAnalyzer
      * @param pseudo the pseudo class or element used for style computation
      * @return the resulting style declaration 
      */
-    public NodeData getElementStyleInherited(Element el, PseudoDeclaration pseudo)
+    public NodeData getElementStyleInherited(Element el, PseudoDeclaration pseudo, NodeData parentStyle)
     {
-        checkStylesInherited();
-        return istylemap.get(el, pseudo);
+        if (analyzer == null)
+            analyzer = new DirectAnalyzer(styles);
+        NodeData ret = analyzer.getElementStyle(el, pseudo, media);
+        if (parentStyle != null)
+            ret.inheritFrom(parentStyle);
+        return ret;
     }
     
     /**
@@ -327,8 +311,9 @@ public class DOMAnalyzer
      */
     public boolean hasPseudoDef(Element el, PseudoDeclaration pseudo)
     {
-        checkStylesInherited();
-        return istylemap.hasPseudo(el, pseudo);
+        /*checkStylesInherited();
+        return istylemap.hasPseudo(el, pseudo);*/
+        return false; //TODO
     }
     
     /**
@@ -339,8 +324,9 @@ public class DOMAnalyzer
      */
     public void useStyle(Element el, PseudoDeclaration pseudo, NodeData style)
     {
-        checkStylesInherited();
-        istylemap.put(el, pseudo, style);
+        /*checkStylesInherited();
+        istylemap.put(el, pseudo, style);*/
+        //TODO
     }
     
     //====================================================================
@@ -367,7 +353,7 @@ public class DOMAnalyzer
         if (n.getNodeType() == Node.ELEMENT_NODE)
         {
             Element el = (Element) n;
-            NodeData decl = getElementStyleInherited(el);
+            NodeData decl = getElementStyleInherited(el, null); //TODO
             if (decl != null)
             {
                 String decls = decl.toString().replace("\n", "");
