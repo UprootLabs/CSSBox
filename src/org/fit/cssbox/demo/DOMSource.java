@@ -23,8 +23,10 @@ package org.fit.cssbox.demo;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.xerces.parsers.DOMParser;
-import org.cyberneko.html.HTMLConfiguration;
+import org.lobobrowser.html.UserAgentContext;
+import org.lobobrowser.html.parser.DocumentBuilderImpl;
+import org.lobobrowser.html.parser.InputSourceImpl;
+import org.lobobrowser.html.test.SimpleUserAgentContext;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -71,13 +73,20 @@ public class DOMSource
 
     public Document parse() throws SAXException, IOException
     {
-        DOMParser parser = new DOMParser(new HTMLConfiguration());
+        SimpleUserAgentContext context = new SimpleUserAgentContext();
+        context.setScriptingEnabled(false);
+        DocumentBuilderImpl dbi = new DocumentBuilderImpl(context);
+        // A document URI and a charset should be provided.
+        doc = dbi.parse(new InputSourceImpl(is, "", charset));
+        return doc;
+        
+        /*DOMParser parser = new DOMParser(new HTMLConfiguration());
         parser.setProperty("http://cyberneko.org/html/properties/names/elems", "lower");
         if (charset != null)
             parser.setProperty("http://cyberneko.org/html/properties/default-encoding", charset);
         parser.parse(new org.xml.sax.InputSource(is));
         doc = parser.getDocument();
-        return doc;
+        return doc;*/
     }
     
     public String getHttpCharset()
